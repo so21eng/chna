@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title> MatGeo 👩‍🏫🕧 </title>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<header style="
+    display:flex;
+    align-items:center;
+    gap:400px;
+">
+    <!-- Logo -->
+    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRkjAbi2xWW-0Zvgxhm2TJwQsmF2V1ExvT5_A&s" 
+         alt="Logo UNSAAC" 
+         style="width:130px; border-radius:8px;">
+
+    <!-- Texto (título + frase) -->
+    <div>
+        <h1> MatGeo 👩‍🏫🕧 </h1>
+
+        <div style="
+            font-size:0.95rem;
+            margin-top:6px;
+            color:white;
+        ">
+            Transforma las matemáticas en una experiencia visual, divertida y didáctica.
+        </div>
+    </div>
+</header>
+
+
+<div class="container">
+  <div class="top">
+    <div class="left panel">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <strong id="nivel-title">Nivel: Fácil</strong>
+          <div style="font-size:0.9rem;color:#456">Pregunta <span id="q-index">1</span> / <span id="q-total">3</span></div>
+        </div>
+        <div style="text-align:right">
+          <div class="timer">⏱️ <span id="time">80</span>s</div>
+          <div class="score">⭐ <span id="pts">0</span></div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px" class="panel">
+        <div class="figure-wrap">
+          <div class="figure-img panel" id="figure-left"><img id="imgLeft" src="" alt="Figura izquierda"></div>
+          <div class="figure-img panel" id="figure-right"><img id="imgRight" src="" alt="Figura derecha"></div>
+        </div>
+
+        <div style="margin-top:12px">
+          <div id="pregunta-text" style="font-weight:800">Cargando pregunta ...</div>
+          <div id="context-text" style="margin-top:6px;color:#456"></div>
+
+          <div id="inputs-area" style="margin-top:8px"></div>
+
+          <div style="margin-top:8px;display:flex;gap:8px">
+            <button class="btn btn-play" id="btnSubmit">Enviar respuesta</button>
+            <button class="btn" id="btnSkip" style="background:#fff;border:1px solid #e6eef8">Saltar</button>
+          </div>
+
+          <div id="feedback" class="feedback" style="display:none"></div>
+          <div id="solution" class="steps" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="right panel">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-weight:700">Controles</div>
+        <div style="font-size:0.9rem;color:#666">Bonificación por rapidez</div>
+      </div>
+
+      <div style="margin-top:10px" class="level-select">
+        <div class="level active" data-level="0">Fácil</div>
+        <div class="level" data-level="1">Medio</div>
+        <div class="level" data-level="2">Difícil</div>
+      </div>
+
+      <div style="margin-top:12px">
+        <div style="font-weight:700">Puntuación</div>
+        <div style="margin-top:8px">Base por acierto: <strong>100 pts</strong></div>
+        <div>Tiempo máximo por pregunta: <strong>60s</strong></div>
+      </div>
+
+      <div style="margin-top:12px">
+        <button class="btn btn-next" id="btnRestart">Reiniciar juego</button>
+      </div>
+
+      <div style="margin-top:16px">
+        <div style="font-weight:700">Historial</div>
+        <div id="history" style="margin-top:8px;font-size:0.9rem;color:#444">— Aún no hay respuestas —</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------------------
+ - Datos del juego (preguntas)
+ - Cada pregunta incluye:
+   * images: data-img for left/right (replace with tus URLs)
+   * inputs: campos que el alumno debe rellenar antes de enviar
+   * compute: función que recibe objeto {campo:valor,...} y retorna {answer, steps}
+----------------------------*/
+
+const niveles = [
+  // Nivel 0 - Fácil (ejemplos con data-img placeholders)
+  [
+    {
+      id:'f1',
+      title:'Área del patio rectangular',
+      context:'El patio del colegio mide 12 m de largo y 8 m de ancho. Calcula el área que deben pintar.',
+      images:{ left:'https://floors-supreme.es/wp-content/uploads/2022/06/suelo-drenante-para-patios-de-colegio-Bergo-Royal.jpg', right: 'https://tse3.mm.bing.net/th/id/OIP.eG39dcyYcZ5m4w4aNPO0lwAAAA?pid=Api&P=0&h=180' },
+      inputs:[{id:'largo',label:'Largo (m)',placeholder:'12'},{id:'ancho',label:'Ancho (m)',placeholder:'8'}],
+      compute:(vals)=>{ const L=Number(vals.largo), A=Number(vals.ancho); return {answer:L*A, steps:`A = largo × ancho = ${L} × ${A} = ${L*A} m²`} }
+    },
+    {
+      id:'f2',
+      title:'Volumen de tanque cilíndrico',
+      context:'Un tanque del laboratorio (cilíndrico) tiene radio 0.75 m y altura 1.5 m. ¿Cuánto líquido cabe? (usa π ≈ 3.14)',
+      images:{ left:'https://tse4.mm.bing.net/th/id/OIP.eZaPECEDvUe867EPoHsAnQHaEp?pid=Api&P=0&h=180', right:'https://tse3.mm.bing.net/th/id/OIP.sxQpLP7jf8Y3y5pLJjzrawHaEa?pid=Api&P=0&h=180' },
+      inputs:[{id:'radio',label:'Radio (m)',placeholder:'0.75'},{id:'altura',label:'Altura (m)',placeholder:'1.5'}],
+      compute:(v)=>{ const r=Number(v.radio), h=Number(v.altura); const ans=3.14*r*r*h; return {answer:ans, steps:`V = π r² h ≈ 3.14 × ${r}² × ${h} = ${ans.toFixed(3)} m³`} }
+    },
+    {
+      id:'f3',
+      title:'Área de un pizarrón triangular',
+      context:'Pizarrón triangular con base 2 m y altura 1.2 m. ¿Qué área requiere forro protector?',
+      images:{ left:'https://tse2.mm.bing.net/th/id/OIP.CBnwodgyUD4V3_Z6Z4Z7cQHaHa?pid=Api&P=0&h=180', right:'https://tse4.mm.bing.net/th/id/OIP.ut0uQI1OcKOUEdPrO7mivAHaEO?pid=Api&P=0&h=180' },
+      inputs:[{id:'base',label:'Base (m)',placeholder:'2'},{id:'altura',label:'Altura (m)',placeholder:'1.2'}],
+      compute:(v)=>{ const b=Number(v.base), h=Number(v.altura); return {answer:(b*h)/2, steps:`A = (base × altura)/2 = (${b} × ${h})/2 = ${(b*h)/2} m²`} }
+    }
+  ],
+
+  // Nivel 1 - Medio
+  [
+    {
+      id:'m1',
+      title:'Piscina rectangular del colegio (volumen)',
+      context:'Piscina 12 m × 6 m con profundidad media 1.8 m. ¿Cuánto agua necesita? (m³)',
+      images:{ left:'https://tse3.mm.bing.net/th/id/OIP.4aBP4gTb7Il7JRGdUfmdogHaE8?pid=Api&P=0&h=180', right:'https://tse2.mm.bing.net/th/id/OIP.ibkLT_yCH7UzPgIORaEuWwHaHa?pid=Api&P=0&h=180' },
+      inputs:[{id:'largo',label:'Largo (m)',placeholder:'12'},{id:'ancho',label:'Ancho (m)',placeholder:'6'},{id:'prof',label:'Profundidad media (m)',placeholder:'1.8'}],
+      compute:(v)=>{const L=Number(v.largo), A=Number(v.ancho), p=Number(v.prof); const vol=L*A*p; return {answer:vol, steps:`V = largo × ancho × profundidad = ${L} × ${A} × ${p} = ${vol} m³`} }
+    },
+    {
+      id:'m2',
+      title:'Volumen de bloque prismático (y cuántos en 1 m³)',
+      context:'Bloque 0.2 × 0.1 × 0.08 m. Calcula su volumen y cuántos caben en 1 m³.',
+      images:{ left:'https://i.ytimg.com/vi/7-_E9cp7YVM/maxresdefault.jpg', right:'https://enciclopediaiberoamericana.com/wp-content/uploads/2022/06/figura-2-3.png' },
+      inputs:[{id:'a',label:'Largo (m)',placeholder:'0.2'},{id:'b',label:'Ancho (m)',placeholder:'0.1'},{id:'c',label:'Altura (m)',placeholder:'0.08'}],
+      compute:(v)=>{const a=Number(v.a), b=Number(v.b), c=Number(v.c); const vol=a*b*c; const qty=Math.floor(1/vol); return {answer:vol, steps:`V = a × b × c = ${a} × ${b} × ${c} = ${vol} m³. En 1 m³ caben aprox. ${qty} bloques.`} }
+    },
+    {
+      id:'m3',
+      title:'Tanque rectangular con semiesfera en tapa (volumen)',
+      context:'Base 2.5 × 1.6 m (altura base 1 m) y semiesfera de radio 0.8 m. ¿Volumen total? (π≈3.14)',
+      images:{ left:'https://www.researchgate.net/publication/301674653/figure/fig4/AS%3A355508683853841%401461771283816/Tank-with-hemispherical-head-9.png', right:'https://i.ytimg.com/vi/V8Vt4GB84ec/maxresdefault.jpg' },
+      inputs:[{id:'l',label:'Largo base (m)',placeholder:'2.5'},{id:'a',label:'Ancho base (m)',placeholder:'1.6'},{id:'r',label:'Radio semiesfera (m)',placeholder:'0.8'}],
+      compute:(v)=>{const L=Number(v.l), A=Number(v.a), r=Number(v.r); const volBase=L*A*1; const volSemi=0.5*(4/3)*3.14*Math.pow(r,3); const total=volBase+volSemi; return {answer:total, steps:`V_base = ${L}×${A}×1 = ${L*A} m³. V_semiesfera ≈ ${volSemi.toFixed(3)} m³. Total ≈ ${total.toFixed(3)} m³`} }
+    }
+  ],
+
+  // Nivel 2 - Difícil
+  [
+    {
+      id:'d1',
+      title:'Volumen domo semiesférico y área base',
+      context:'Domo semiesférico radio 6 m. Calcula volumen interno y área de base (π≈3.1416).',
+      images:{ left:'https://casaprefabricada.cl/wp-content/uploads/2022/05/domo.png', right:'https://www.areasyvolumenes.net/wp-content/uploads/2022/09/volumen-de-una-semiesfera.png' },
+      inputs:[{id:'r',label:'Radio (m)',placeholder:'6'}],
+      compute:(v)=>{const r=Number(v.r); const vol=0.5*(4/3)*3.1416*Math.pow(r,3); const area=3.1416*r*r; return {answer:vol, steps:`V_semiesfera ≈ ${vol.toFixed(3)} m³. Área base ≈ ${area.toFixed(3)} m²`} }
+    },
+    {
+      id:'d2',
+      title:'Tanque compuesto: cilindro + cono',
+      context:'Cilindro radio 2 m altura 3 m y cono invertido radio 2 m altura 1.5 m. Calcula volumen total.',
+      images:{ left:'https://i.ytimg.com/vi/eyPd3xBH4bk/maxresdefault.jpg', right:'https://i.pinimg.com/originals/d6/2f/95/d62f9513fad0f04fd2e14a80ecbc8348.png' },
+      inputs:[{id:'r',label:'Radio (m)',placeholder:'2'},{id:'hc',label:'Altura cilindro (m)',placeholder:'3'},{id:'hcono',label:'Altura cono (m)',placeholder:'1.5'}],
+      compute:(v)=>{const r=Number(v.r), hc=Number(v.hc), hco=Number(v.hcono); const Vc=Math.PI*r*r*hc; const Vcone=(1/3)*Math.PI*r*r*hco; const total=Vc+Vcone; return {answer:total, steps:`V_cilindro ≈ ${Vc.toFixed(3)} m³. V_cono ≈ ${Vcone.toFixed(3)} m³. Total ≈ ${total.toFixed(3)} m³`} }
+    },
+    {
+      id:'d3',
+      title:'Volumen prisma con base trapezoidal',
+      context:'Base mayor 4 m, base menor 2 m, altura trapezoide 3 m, altura prisma 2.5 m. Calcula volumen.',
+      images:{ left:'https://tse1.mm.bing.net/th/id/OIP.FW84YyGPU09T4CLYk8H9iwHaHa?pid=Api&P=0&h=180', right:'https://i.ytimg.com/vi/ZuSccspzrS8/maxresdefault.jpg' },
+      inputs:[{id:'B1',label:'Base mayor (m)',placeholder:'4'},{id:'B2',label:'Base menor (m)',placeholder:'2'},{id:'htrap',label:'Altura trapezoide (m)',placeholder:'3'},{id:'H',label:'Altura prisma (m)',placeholder:'2.5'}],
+      compute:(v)=>{const B1=Number(v.B1), B2=Number(v.B2), ht=Number(v.htrap), H=Number(v.H); const areaBase=((B1+B2)/2)*ht; const vol=areaBase*H; return {answer:vol, steps:`A_base = ((B1+B2)/2)×h = ${areaBase} m². V = A_base × H = ${vol} m³`} }
+    }
+  ]
+];
+
+/* ---------- Estado y DOM ---------- */
+let nivel = 0;
+let preguntas = [];
+let qIndex = 0;
+let puntos = 0;
+let timer = null;
+let timeLeft = 60;
+let history = [];
+
+const imgLeft = document.getElementById('imgLeft');
+const imgRight = document.getElementById('imgRight');
+const preguntaText = document.getElementById('pregunta-text');
+const contextText = document.getElementById('context-text');
+const inputsArea = document.getElementById('inputs-area');
+const btnSubmit = document.getElementById('btnSubmit');
+const btnSkip = document.getElementById('btnSkip');
+const timeEl = document.getElementById('time');
+const ptsEl = document.getElementById('pts');
+const qIndexEl = document.getElementById('q-index');
+const qTotalEl = document.getElementById('q-total');
+const nivelTitle = document.getElementById('nivel-title');
+const feedbackEl = document.getElementById('feedback');
+const solutionEl = document.getElementById('solution');
+const historyEl = document.getElementById('history');
+
+/* --------- localStorage helpers ---------- */
+function saveState(){
+  const state = {nivel,puntos,history,qIndex};
+  try{ localStorage.setItem('juegoAreas_state', JSON.stringify(state)); } catch(e){ console.warn('localStorage no disponible'); }
+}
+function loadState(){
+  try{
+    const s = JSON.parse(localStorage.getItem('juegoAreas_state')||'null');
+    if(s){ nivel=s.nivel||0; puntos=s.puntos||0; history=s.history||[]; qIndex=s.qIndex||0; }
+  }catch(e){ console.warn(e); }
+}
+
+/* ---------- Utility ---------- */
+function shuffleArray(a){ return a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]); }
+function formatNumber(x){ return (Math.round(x*1000)/1000).toString(); }
+
+/* ---------- Game flow ---------- */
+function setLevel(n){
+  nivel = n;
+  document.querySelectorAll('.level').forEach(el=>el.classList.remove('active'));
+  document.querySelector(`.level[data-level='${n}']`).classList.add('active');
+  nivelTitle.textContent = ['Nivel: Fácil','Nivel: Medio','Nivel: Difícil'][n];
+  preguntas = shuffleArray(niveles[n]).slice();
+  qIndex = 0;
+  qTotalEl.textContent = preguntas.length;
+  loadQuestion();
+  saveState();
+}
+
+function loadQuestion(){
+  stopTimer();
+  solutionEl.style.display='none'; feedbackEl.style.display='none';
+  if(qIndex>=preguntas.length){ endLevel(); return; }
+  const q = preguntas[qIndex];
+  qIndexEl.textContent = qIndex+1;
+  preguntaText.textContent = q.title;
+  contextText.textContent = q.context;
+  // cargar imágenes (usa las URLs especificadas en cada pregunta)
+  imgLeft.src = q.images.left;
+  imgRight.src = q.images.right;
+  // construir inputs
+  inputsArea.innerHTML = '';
+  q.inputs.forEach(inp=>{
+    const wrapper = document.createElement('div');
+    const label = document.createElement('label'); label.textContent = inp.label; wrapper.appendChild(label);
+    const input = document.createElement('input'); input.type='number'; input.id = 'in_'+inp.id; input.placeholder = inp.placeholder || ''; input.step='any';
+    wrapper.appendChild(input);
+    inputsArea.appendChild(wrapper);
+  });
+  // reiniciar tiempo
+  timeLeft = 60; timeEl.textContent = timeLeft; startTimer();
+}
+
+function startTimer(){
+  timeEl.textContent = timeLeft;
+  timer = setInterval(()=>{ timeLeft--; timeEl.textContent = timeLeft; if(timeLeft<=0){ clearInterval(timer); onTimeout(); } },1000);
+}
+
+function stopTimer(){ if(timer) clearInterval(timer); }
+
+function onTimeout(){ alert('⏰ Tiempo agotado para esta pregunta'); recordAnswer(false,'Tiempo','Tiempo agotado'); qIndex++; saveState(); loadQuestion(); }
+
+btnSubmit.addEventListener('click', ()=>{
+  const q = preguntas[qIndex];
+  // recoger inputs
+  const values = {};
+  let valid = true;
+  q.inputs.forEach(inp=>{ const v = document.getElementById('in_'+inp.id).value; if(v===''){ valid=false; } values[inp.id]=v; });
+  if(!valid){ feedback('Completa todos los campos antes de enviar.', false); return; }
+  stopTimer();
+  // calcular respuesta correcta
+  const result = q.compute(values);
+  const expected = Number(result.answer);
+  // Pedir al alumno que ingrese su resultado final (para comparar)
+  const userStr = prompt('Ingresa el resultado numérico que obtuviste (ej. 15.6). Se comparará con la solución y verás el paso a paso.');
+  const userVal = Number(userStr);
+  const diff = Math.abs(userVal - expected);
+  const tolerance = Math.max(0.02 * Math.abs(expected), 0.01); // tolerancia 2% o 0.01
+  const correct = diff <= tolerance;
+  const base = 100;
+  const bonus = Math.round((timeLeft/60)*50);
+  const gained = correct ? base + bonus : 0;
+  if(correct){
+    puntos += gained;
+    feedback('✅ Respuesta correcta. Ganaste '+gained+' pts (incluye bonificación por rapidez).', true);
+    playBeep(880, 0.08);
+  } else {
+    feedback('❌ Respuesta incorrecta. No ganaste puntos. Valor correcto: '+formatNumber(expected), false);
+    playBeep(220, 0.15);
+  }
+  solutionEl.style.display='block';
+  solutionEl.innerHTML = `<strong>Pasos:</strong><div style="margin-top:8px">${result.steps}</div><div style="margin-top:8px;font-weight:700">Tu valor: ${isNaN(userVal)?'No numérico':formatNumber(userVal)} | Correcto: ${formatNumber(expected)}</div>`;
+  recordAnswer(correct, userVal, expected);
+  ptsEl.textContent = puntos;
+  qIndex++;
+  saveState();
+  setTimeout(()=>{ loadQuestion(); }, 1100);
+});
+
+btnSkip.addEventListener('click', ()=>{ if(confirm('¿Seguro que quieres saltar esta pregunta? Perderás la oportunidad de puntuarla.')){ recordAnswer(false,'Saltado','Saltado'); qIndex++; saveState(); loadQuestion(); } });
+
+document.getElementById('btnRestart').addEventListener('click', ()=>{ if(confirm('Reiniciar juego?')){ puntos=0; history=[]; renderHistory(); ptsEl.textContent=0; saveState(); setLevel(nivel); } });
+
+document.querySelectorAll('.level').forEach(el=>el.addEventListener('click', ()=>{ setLevel(Number(el.dataset.level)); }));
+
+function feedback(msg, ok){
+  feedbackEl.style.display='block';
+  feedbackEl.className = 'feedback '+(ok?'ok':'err');
+  feedbackEl.textContent = msg;
+}
+
+function recordAnswer(ok, userVal, expected){
+  history.push({q:preguntas[qIndex].title, ok, user: userVal, expected});
+  renderHistory();
+  saveState();
+}
+
+function renderHistory(){
+  if(history.length===0){ historyEl.innerHTML='— Aún no hay respuestas —'; return; }
+  historyEl.innerHTML = history.slice().reverse().map(h=>`<div style='margin-bottom:6px;'><strong>${h.q}</strong> — ${h.ok?'<span style="color:green">Correcto</span>':'<span style="color:red">Incorrecto</span>'} — Tu: ${formatNumber(h.user)} | Esperado: ${formatNumber(h.expected)}</div>`).join('');
+}
+
+function endLevel(){
+  stopTimer();
+  document.getElementById('figure-left').innerHTML = '<div style="padding:20px;text-align:center;font-weight:800">Nivel completado</div>';
+  document.getElementById('figure-right').innerHTML = '';
+  preguntaText.textContent = 'Has terminado el nivel';
+  contextText.textContent = 'Puntuación obtenida: '+puntos;
+  btnSubmit.disabled = true;
+}
+
+/* ---------- Sonidos simples ---------- */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playBeep(freq=600,dur=0.12){
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type='sine'; o.frequency.value=freq; g.gain.value=0.02; o.connect(g); g.connect(audioCtx.destination);
+  o.start(); setTimeout(()=>o.stop(), dur*1000);
+}
+
+/* ---------- Inicialización ---------- */
+loadState();
+ptsEl.textContent = puntos;
+renderHistory();
+setLevel(nivel);
+</script>
+</body>
+    <footer class="pie">
+        <p>&copy; 2025 - PENSAMIENTO COMPUTACIONAL E INTELIGENCIA ARTIFICIAL | UNIVERSIDAD NACIONAL DE SAN ANTONIO ABAD DEL CUSCO</p>
+    </footer>
+</html>
